@@ -6,7 +6,7 @@ reset;                       # purge any existing model, data, and problem/solut
 load amplcsv.dll;            # load CSV table handler
 
 # AMPL display options
-option display_width    89;  # max characters displayed per line
+option display_width   233;  # max characters displayed per line
 option omit_zero_rows    1;  # when 1, omits rows with all zero values from displayed lists
 option times             0;  # when 1, shows AMPL translator's time and memory stats (handy for debugging memory issues and speeding)
 option gentimes          0;  # when 1, shows genmod phase stats (including time and memory used per model component)
@@ -21,7 +21,7 @@ option solver gurobi;
 # solver options                                                                                                                                                   EXACT-ALGORITHMS-----------------------------   HEURISTICS---------------
                        # log-chatter-------------------------------   CPU------   stopping-criteria------------   presolve--------------------------------------   continuous/relaxed-phase-------   MIP-phase--                            
 option highs_options   ' outlev=1   version  timing=1  miploglev=2                timelim=233  relgaptol=0.0001   presolve=on  cvt:pre:all=1  cvt:pre:eqbinary=0   parallel=choose  method=choose                  heureff=0.5               ';
-option gurobi_options  ' outlev=1                      logfreq=10     threads=8   timelim=55   mipgap=0.0001      presolve=-1                                      method=3                          mipfocus=0    heurfrac=0.2              ';
+option gurobi_options  ' outlev=1                      logfreq=10     threads=8   timelim=144  mipgap=0.0001     presolve=-1                                      method=3                          mipfocus=0    heurfrac=0.5              ';
 option cplex_options   ' display=1                     mipdisplay=2   threads=8   time=55      mipgap=0.0001      presolve=0                                       primalopt                         mipsearch=1   heureffort=2  heurfreq=10 ';
 
 #============#
@@ -30,51 +30,79 @@ option cplex_options   ' display=1                     mipdisplay=2   threads=8 
 
 model 'model.mod';
 
-#====================#
-# IMPORT DOMAIN DATA #
-#====================#
-
-# single-member sets
+#=============#
+# IMPORT DATA #
+#=============#
 
 data 'data/data.dat';
 
-table tVEHICL IN "amplcsv" "quote=double" "data/vehicles.csv":
-    VEHICL       <- [ID],
-    vehicle_type  ~ Vehicle,
-    vehicle_size  ~ Size,
-    model_year    ~ Year,
-    purch_cost    ~ "Cost ($)", 
-    yearly_range  ~ "Yearly range (km)", 
-    daily_range   ~ Distance;
-read table tVEHICL;
+table vehicles
+  IN "amplcsv" "quote=double" "data/vehicles.csv":
+    VEHC         <- [ID],
+    drvt          ~  Vehicle,
+    size          ~  Size,
+    year          ~  Year,
+    c_prch        ~  "Cost ($)", 
+    d_max_pa      ~  "Yearly range (km)", 
+    dist          ~  Distance;
+  read table vehicles;
 
-table tcost_profiles IN "amplcsv" "quote=double" "data/cost_profiles.csv":
-    AGE       <- ["End of Year"],
-    resale_value ~ "Resale Value %",
-    insurance_cost ~ "Insurance Cost %",
-    maintenance_cost ~ "Maintenance Cost %";
-read table tcost_profiles;
+table cost_profiles 
+  IN "amplcsv" "quote=double" "data/cost_profiles.csv":
+    AGES         <- ["End of Year"],
+    c_sell_fctr   ~  "Resale Value %",
+    c_insu_fctr   ~  "Insurance Cost %",
+    c_mntn_fctr   ~  "Maintenance Cost %";
+  read table cost_profiles;
 
-table tcarbon_emissions IN "amplcsv" "quote=double" "data/carbon_emissions.csv":
+table carbon_emissions
+  IN "amplcsv" "quote=double" "data/carbon_emissions.csv":
     [Year],
-    carbon_emissions ~ "Carbon emission CO2/kg";
-read table tcarbon_emissions;
+    co2_max       ~  "Carbon emission CO2/kg";
+  read table carbon_emissions;
+
+table vehicles_fuels 
+  IN "amplcsv" "quote=double" "data/vehicles_fuels.csv":
+    [ID, Fuel],
+    fuel_cons     ~  "Consumption (unit_fuel/km)";
+  read table vehicles_fuels;
+
+table fuels 
+  IN "amplcsv" "quote=double" "data/fuels.csv":
+    [Fuel, Year],
+    c_fuel        ~  "Cost ($/unit_fuel)",
+    c_fuel_uncr   ~  "Cost Uncertainty (±%)";
+  read table fuels;
+
+table demand 
+  IN "amplcsv" "quote=double" "data/demand.csv":
+    [Size, Distance, Year],
+    demand        ~  "Demand (km)";
+  read table demand;
+
+
+#=======#
+# SOLVE #
+#=======#
+
+solve;
+
+
+
+#=================#
+# EXPORT SOLUTION #
+#=================#
 
 
 # sets of tuples
 
-table tVEHICLE_FUELS IN "amplcsv" "quote=double" "data/vehicles_fuels.csv":
-    [v ~ ID, f ~ Fuel],
-    vehicle_fuel_consumption[v,f] ~ "Consumption (unit_fuel/km)";
-read table tVEHICLE_FUELS;
-
-table tFUELS_YEARS IN "amplcsv" "quote=double" "data/fuels.csv":
-    [f ~ Fuel, y ~ Year],
-    fuel_cost             ~ "Cost ($/unit_fuel)",
-    fuel_cost_uncertainty ~ "Cost Uncertainty (±%)";
-read table tFUELS_YEARS;
-
-table tdemand IN "amplcsv" "quote=double" "data/demand.csv":
-    [y ~ Year, s ~ Size, d ~ Distance],
-    demand ~ "Demand (km)";
-read table tdemand;
+# table t_solution INOUT "amplcsv" "quote=double" "data/submission.csv":
+#   [ y           ~ Year,
+#     v           ~ ID,
+#     t           ~ Type,
+#     f           ~ Fuel,
+#     d           ~ Distance_bucket
+#   ],
+#     Qty[y,v]    ~ Num_Vehicles,
+#     fuel_cost[]   ~ "Distance_per_vehicle(km)";
+# write table t_solution;

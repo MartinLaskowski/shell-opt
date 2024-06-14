@@ -1,14 +1,23 @@
-set YEARS  := 2023 2024 2025 2026 2027 2028 2029 2030 2031 2032 2033 2034 2035 2036 2037 2038;
-set FUELS  := Electricity B20 HVO LNG BioLNG ;
+set YEAR := 2023 2024 2025 2026 2027 2028 2029 2030 2031 2032 2033 2034 2035 2036 2037 2038;
 
-set V_TYPE := BEV Diesel LNG ;
-set V_SIZE := S1 S2 S3 S4 ;
-set V_DRNG := D1 D2 D3 D4 ;
+set DRVT := BEV Diesel LNG ;
+set FUEL := Electricity B20 HVO LNG BioLNG ;
+set SIZE := S1 S2 S3 S4 ;
+set DIST := D1 D2 D3 D4 ;
 
-param: fuel_emissions :=
-    B20           3.04858
-    BioLNG        0.378439
-    Electricity   0.0
-    HVO           0.487624
-    LNG           2.486188
+
+param can_use:
+            B20     HVO     BioLNG  LNG     Electricity:=
+    Diesel  1       1       0       0       0
+    LNG     0       0       1       1       0
+    BEV     0       0       0       0       1
 ;
+
+param: co2_rate :=    # CO2/unit_fuel
+    B20                 3.04858
+    BioLNG              0.378439
+    Electricity         0.0
+    HVO                 0.487624
+    LNG                 2.486188
+;
+
