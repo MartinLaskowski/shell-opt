@@ -1,0 +1,24 @@
+print "Year,ID,Num_Vehicles,Type,Fuel,Distance_bucket,Distance_per_vehicle(km)" > "data/submission.csv";
+for {y in YEAR} {
+
+    # 2023,Diesel_S4_2023,1,Buy,,,0.0
+    # 2023,Diesel_S1_2023,36,Buy,,,0.0 original! :)
+    for {v in VEHC: Qty_Buy[v,y] != 0} {            
+        printf "%4i%s%s%s%i%s\n", y,",", v, ",", Qty_Buy[v,y], ",Buy,,,0.0" > "data/submission.csv";
+    }
+    
+    # ...
+    # 2023,Diesel_S1_2023,3,Use,B20,D1,102000.0 original! :)
+    for {d in DIST, v in VEHC, f in FUEL: can_use[drvt[v],f] = 1 and ord(d,DIST) <= ord(dist[v],DIST) and Qty_Use[v,f,d,y] * Supply[v,f,d,y] != 0} {
+        printf "%4i%s%s%s%i%s%s%s%s%s%.1f\n", y,",", v, ",", Qty_Use[v,f,d,y], ",Use,", f, ",", d, ",", Supply[v,f,d,y] > "data/submission.csv";
+    }
+
+    # 2023,Diesel_S4_2023,1,Sell,,,0.0
+    # 2023,Diesel_S1_2023,6,Sell,,,0.0 original! :)
+    for {v in VEHC:                       Qty_Sel[v,y] != 0} {            
+        printf "%4i%s%s%s%i%s\n", y,",", v, ",", Qty_Sel[v,y], ",Sell,,,0.0" > "data/submission.csv";
+    }
+
+}
+
+close "data/submission.csv";

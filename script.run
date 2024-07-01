@@ -12,17 +12,20 @@ option times             0;  # when 1, shows AMPL translator's time and memory s
 option gentimes          0;  # when 1, shows genmod phase stats (including time and memory used per model component)
 option show_stats        2;  # when 1, shows generated problem's size stats; if 2, also shows presolve iteration recommendations (which often improve speed when followed)
 
+# AMPL presolve iterations
+option presolve        100;  # max iterations of AMPL's presolve algorithm (raise or lower per guidance in the AMPL log, enabled by show_stat 2)
+
 #======================#
 # SELECT & TUNE SOLVER #
 #======================#
 
 option solver gurobi;
 
-# solver options                                                                                                                                                   EXACT-ALGORITHMS-----------------------------   HEURISTICS---------------
-                       # log-chatter-------------------------------   CPU------   stopping-criteria------------   presolve--------------------------------------   continuous/relaxed-phase-------   MIP-phase--                            
-option highs_options   ' outlev=1   version  timing=1  miploglev=2                timelim=233  relgaptol=0.0001   presolve=on  cvt:pre:all=1  cvt:pre:eqbinary=0   parallel=choose  method=choose                  heureff=0.5               ';
-option gurobi_options  ' outlev=1                      logfreq=10     threads=8   timelim=144  mipgap=0.0001     presolve=-1                                      method=3                          mipfocus=0    heurfrac=0.5              ';
-option cplex_options   ' display=1                     mipdisplay=2   threads=8   time=55      mipgap=0.0001      presolve=0                                       primalopt                         mipsearch=1   heureffort=2  heurfreq=10 ';
+# solver options                                                                                                                                            EXACT-ALGORITHMS------------------------------------------------------------------------------------------------------   HEURISTICS----------------
+                       # log-chatter---------------------------   CPU------   stopping-criteria-----------   presolve------------------------------------   continuous/relaxed-phase-----------------   MIP-phase--                                                Other----------
+option gurobi_options  ' outlev=1                  logfreq=10     threads=8   timelim=99999 mipgap=0.001     presolve=2                                     alg:method=1 bar:crossover=-1 alg:basis=3   mip:focus=0 mip:obbt=3 mip:intfocus=1 mip:disconnected=2   alg:feasrelax=0   mip:heurfrac=0.5         ';
+option cplex_options   ' display=1                 mipdisplay=2   threads=8   time=55     mipgap=0.0001      presolve=0                                     primalopt                                   mipsearch=1                                                                  heureffort=2 heurfreq=10 ';
+option highs_options   ' outlev=1 version timing=1 miploglev=2                timelim=233 relgaptol=0.0001   presolve=on cvt:pre:all=1 cvt:pre:eqbinary=0   parallel=choose method=choose                                                                                            heureff=0.5              ';
 
 #============#
 # LOAD MODEL #
@@ -80,29 +83,14 @@ table demand
     demand        ~  "Demand (km)";
   read table demand;
 
-
 #=======#
 # SOLVE #
 #=======#
 
 solve;
 
-
-
 #=================#
 # EXPORT SOLUTION #
 #=================#
 
-
-# sets of tuples
-
-# table t_solution INOUT "amplcsv" "quote=double" "data/submission.csv":
-#   [ y           ~ Year,
-#     v           ~ ID,
-#     t           ~ Type,
-#     f           ~ Fuel,
-#     d           ~ Distance_bucket
-#   ],
-#     Qty[y,v]    ~ Num_Vehicles,
-#     fuel_cost[]   ~ "Distance_per_vehicle(km)";
-# write table t_solution;
+commands print_submission.run;
