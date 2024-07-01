@@ -38,10 +38,10 @@ param dpr_val          {v in VEHC,                                             y
 # Variables #
 #===========#
 
-var Qty_Buy            {     VEHC,                                                  YEAR                                                             } integer >= 0   <= 500        ;   # F
-var Qty_Own            {     VEHC,                                                  YEAR                                                             } integer >= 0   <= 500        ;   # H
-var Qty_Sel            {     VEHC,                                                  YEAR                                                             } integer >= 0   <= 500        ;   # M
-var Qty_Use            {v in VEHC,            f in FUEL,            d in DIST,      YEAR: can_use[drvt[v],f] = 1 and ord(d,DIST) <= ord(dist[v],DIST)} integer >= 0   <= 500        ;   # L 
+var Qty_Buy            {     VEHC,                                                  YEAR                                                             } integer >= 0   <= 500         ;   # F
+var Qty_Own            {     VEHC,                                                  YEAR                                                             } integer >= 0   <= 500         ;   # H
+var Qty_Sel            {     VEHC,                                                  YEAR                                                             } integer >= 0   <= 500         ;   # M
+var Qty_Use            {v in VEHC,            f in FUEL,            d in DIST,      YEAR: can_use[drvt[v],f] = 1 and ord(d,DIST) <= ord(dist[v],DIST)} integer >= 0   <= 500         ;   # L 
 var Supply             {v in VEHC,            f in FUEL,            d in DIST,      YEAR: can_use[drvt[v],f] = 1 and ord(d,DIST) <= ord(dist[v],DIST)}         >= 0   <= d_max_pa[v] ;   # K
 
 #===========#
@@ -66,7 +66,7 @@ s.t. DEF_Qty_Own       {v in VEHC,                                             y
 s.t. Sell_by_y10       {v in VEHC,                                             y in YEAR: age[v,y] > 10  }:                   0                                                 =                    Qty_Own[v,y] ;   #         C6
 s.t. Buy_in_Model_Year {v in VEHC,                                             y in YEAR: y != year[v]   }:                   0                                                 =                    Qty_Buy[v,y] ;   # F       C5
 s.t. Sell_Owned        {v in VEHC,                                             y in YEAR                 }:                   Qty_Own[v,y]                                     >=                    Qty_Sel[v,y] ;
-s.t. Sell_Max_20pc     {                                                       y in YEAR                 }:   sum {v in VEHC} Qty_Own[v,y]  * 0.2                              >=  sum {v in VEHC}   Qty_Sel[v,y] ;   #     C8
+s.t. Sell_Max_20pc     {                                                       y in YEAR                 }:   sum {v in VEHC} Qty_Own[v,y]  * 0.2                              >=  sum {v in VEHC}   Qty_Sel[v,y] ;   #         C8
 
 s.t. DEF_Qty_Use       {v in VEHC,                                             y in YEAR                 }:                   Qty_Own[v,y]                                      =  sum {f in FUEL, d in DIST:            can_use[drvt[v],f] = 1                 and ord(d,DIST) <= ord(dist[v],DIST)}   Qty_Use[v,f,d,y]                                                   ;
 s.t. Max_CO2           {                                                       y in YEAR                 }:                   co2_max[y]                                       >=  sum {v in VEHC, f in FUEL, d in DIST: can_use[drvt[v],f] = 1                 and ord(d,DIST) <= ord(dist[v],DIST)}  (Qty_Use[v,f,d,y] * Supply[v,f,d,y] * co2_rate[f] * fuel_cons[v,f]) ;   # N   C3
