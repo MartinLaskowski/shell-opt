@@ -72,3 +72,7 @@ Given more time, I would first have attempted an extensive stochastic form, depl
 Still, this was fun!!
 
 ### To all contestants, good luck!! ❤️
+
+-- Martin Laskowski
+
+6th July 2024
